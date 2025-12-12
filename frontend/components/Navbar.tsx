@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const { user, logout, loading } = useAuth();
+  const { totalItems } = useCart();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -33,8 +35,18 @@ export default function Navbar() {
               <div className="h-9 w-24 bg-gray-200 animate-pulse rounded-md" />
             ) : user ? (
               <>
+                <Link href="/cart">
+                  <Button variant="outline" size="sm" className="relative">
+                    🛒 Cart
+                    {totalItems > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {totalItems}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
                 <span className="text-sm font-medium text-gray-700">
-                  Welcome, {user.name}
+                  {user.name}
                 </span>
                 <Button
                   onClick={handleLogout}

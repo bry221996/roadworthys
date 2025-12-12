@@ -23,6 +23,11 @@ const User = sequelize.define('User', {
   name: {
     type: DataTypes.STRING(255),
     allowNull: false
+  },
+  company_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    defaultValue: null
   }
 }, {
   tableName: 'users',

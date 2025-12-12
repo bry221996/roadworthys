@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { materialsAPI, Material } from '@/lib/api';
@@ -8,6 +9,7 @@ import MaterialCard from '@/components/MaterialCard';
 
 export default function Home() {
   const { user, loading } = useAuth();
+  const { addItem } = useCart();
   const [materials, setMaterials] = useState<Material[]>([]);
   const [materialsLoading, setMaterialsLoading] = useState(true);
   const [materialsError, setMaterialsError] = useState('');
@@ -32,8 +34,7 @@ export default function Home() {
   };
 
   const handleAddToCart = (material: Material) => {
-    console.log('Add to cart:', material);
-    // TODO: Implement cart functionality
+    addItem(material);
   };
 
   if (loading) {

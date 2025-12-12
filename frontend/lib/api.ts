@@ -95,3 +95,24 @@ export const materialsAPI = {
     return fetchAPI('/materials');
   },
 };
+
+export interface CheckoutItem {
+  uuid: string;
+  quantity: number;
+  price: string;
+}
+
+export interface CheckoutResponse {
+  success: boolean;
+  job: any;
+  message: string;
+}
+
+export const jobsAPI = {
+  createJob: async (items: CheckoutItem[]): Promise<CheckoutResponse> => {
+    return fetchAPI('/jobs', {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    });
+  },
+};
