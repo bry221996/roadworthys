@@ -138,6 +138,27 @@ export interface JobDetailsResponse {
   materials: JobMaterial[];
 }
 
+export interface Note {
+  uuid: string;
+  related_object: string;
+  related_object_uuid: string;
+  note: string;
+  edit_date: string;
+  created_date: string;
+  [key: string]: any;
+}
+
+export interface NotesListResponse {
+  success: boolean;
+  notes: Note[];
+}
+
+export interface CreateNoteResponse {
+  success: boolean;
+  note: Note;
+  message: string;
+}
+
 export const jobsAPI = {
   createJob: async (items: CheckoutItem[]): Promise<CheckoutResponse> => {
     return fetchAPI('/jobs', {
@@ -152,5 +173,16 @@ export const jobsAPI = {
 
   getJobDetails: async (uuid: string): Promise<JobDetailsResponse> => {
     return fetchAPI(`/jobs/${uuid}`);
+  },
+
+  createNote: async (uuid: string, note: string): Promise<CreateNoteResponse> => {
+    return fetchAPI(`/jobs/${uuid}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    });
+  },
+
+  listNotes: async (uuid: string): Promise<NotesListResponse> => {
+    return fetchAPI(`/jobs/${uuid}/notes`);
   },
 };

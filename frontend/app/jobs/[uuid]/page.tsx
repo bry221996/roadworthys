@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { jobsAPI, Job, JobMaterial } from '@/lib/api';
+import { jobsAPI, Job, JobMaterial, Note } from '@/lib/api';
 
 export default function JobDetailsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -18,9 +18,16 @@ export default function JobDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [noteInput, setNoteInput] = useState('');
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notesError, setNotesError] = useState('');
+  const [submittingNote, setSubmittingNote] = useState(false);
+
   useEffect(() => {
     if (user && uuid) {
       fetchJobDetails();
+      fetchNotes();
     }
   }, [user, uuid]);
 
@@ -35,6 +42,38 @@ export default function JobDetailsPage() {
       console.error('Failed to fetch job details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchNotes = async () => {
+    try {
+      setNotesLoading(true);
+      setNotesError('');
+      const response = await jobsAPI.listNotes(uuid);
+      setNotes(response.notes);
+    } catch (error: any) {
+      setNotesError(error.message || 'Failed to load notes');
+      console.error('Failed to fetch notes:', error);
+    } finally {
+      setNotesLoading(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!noteInput.trim()) {
+      return;
+    }
+
+    try {
+      setSubmittingNote(true);
+      await jobsAPI.createNote(uuid, noteInput);
+      setNoteInput('');
+      await fetchNotes();
+    } catch (error: any) {
+      setNotesError(error.message || 'Failed to add note');
+      console.error('Failed to add note:', error);
+    } finally {
+      setSubmittingNote(false);
     }
   };
 
@@ -224,6 +263,68 @@ export default function JobDetailsPage() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Notes</CardTitle>
+            <CardDescription>Add notes or comments about this order</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {notesError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {notesError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <textarea
+                value={noteInput}
+                onChange={(e) => setNoteInput(e.target.value)}
+                placeholder="Add a note..."
+                className="w-full min-h-[100px] px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                disabled={submittingNote}
+              />
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleAddNote}
+                  disabled={submittingNote || !noteInput.trim()}
+                >
+                  {submittingNote ? 'Adding...' : 'Add Note'}
+                </Button>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              {notesLoading ? (
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="bg-gray-50 rounded-lg p-4">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-1/4 mb-2" />
+                      <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4" />
+                    </div>
+                  ))}
+                </div>
+              ) : notes.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No notes yet. Be the first to add one!
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {notes.map((note) => (
+                    <div key={note.uuid} className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-xs text-gray-500">
+                          {formatDate(note.created_date || note.edit_date)}
+                        </p>
+                      </div>
+                      <p className="text-gray-800 whitespace-pre-wrap">{note.note}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -204,8 +204,133 @@ const getJobDetails = async (req, res) => {
   }
 };
 
+const createNote = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const { note } = req.body;
+
+    if (!note || note.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Note text is required'
+      });
+    }
+
+    // Get user to verify company ownership
+    const user = await User.findByPk(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Fetch job to verify ownership
+    const jobResponse = await axios.get(`https://api.servicem8.com/api_1.0/job/${uuid}.json`, {
+      headers: {
+        'accept': 'application/json',
+        'X-Api-Key': process.env.SERVICEM8_API_KEY
+      }
+    });
+
+    // Verify the job belongs to the user's company
+    if (user.company_id && jobResponse.data.company_uuid !== user.company_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to add note to this job'
+      });
+    }
+
+    // Create note in ServiceM8
+    const noteResponse = await axios.post(
+      'https://api.servicem8.com/api_1.0/note.json',
+      {
+        related_object: 'job',
+        related_object_uuid: uuid,
+        note: note
+      },
+      {
+        headers: {
+          'accept': 'application/json',
+          'content-type': 'application/json',
+          'X-Api-Key': process.env.SERVICEM8_API_KEY
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      note: noteResponse.data,
+      message: 'Note added successfully'
+    });
+  } catch (error) {
+    console.error('Create note error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to create note'
+    });
+  }
+};
+
+const listNotes = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+
+    // Get user to verify company ownership
+    const user = await User.findByPk(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Fetch job to verify ownership
+    const jobResponse = await axios.get(`https://api.servicem8.com/api_1.0/job/${uuid}.json`, {
+      headers: {
+        'accept': 'application/json',
+        'X-Api-Key': process.env.SERVICEM8_API_KEY
+      }
+    });
+
+    // Verify the job belongs to the user's company
+    if (user.company_id && jobResponse.data.company_uuid !== user.company_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to view notes for this job'
+      });
+    }
+
+    // Fetch notes from ServiceM8
+    const notesResponse = await axios.get('https://api.servicem8.com/api_1.0/note.json', {
+      params: {
+        '$filter': `related_object_uuid eq '${uuid}'`
+      },
+      headers: {
+        'accept': 'application/json',
+        'X-Api-Key': process.env.SERVICEM8_API_KEY
+      }
+    });
+
+    res.json({
+      success: true,
+      notes: notesResponse.data
+    });
+  } catch (error) {
+    console.error('List notes error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to fetch notes'
+    });
+  }
+};
+
 module.exports = {
   createJob,
   listJobs,
-  getJobDetails
+  getJobDetails,
+  createNote,
+  listNotes
 };
