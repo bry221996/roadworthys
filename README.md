@@ -1,36 +1,65 @@
-# Roadworthys Authentication System
+# Roadworthys Application
 
-A full-stack authentication system built with Express.js backend, Next.js frontend, Tailwind CSS, shadcn UI, and MySQL database.
+A full-stack e-commerce application for managing vehicle roadworthiness materials and services. Built with Express.js backend, Next.js frontend, Tailwind CSS, shadcn UI, MySQL database, and ServiceM8 API integration.
 
 ## Features
 
+### Authentication & User Management
 - User registration with email, name, and password
-- User login with email and password
-- User logout
-- Protected routes with JWT authentication
-- Beautiful UI with shadcn components and Tailwind CSS
+- User login with JWT authentication
+- Protected routes with middleware
 - HTTP-only cookies for secure token storage
 - Password hashing with bcrypt
-- Input validation
+- Automatic company creation on first checkout
+
+### Materials Catalog
+- Browse active materials from ServiceM8
+- View material pricing and stock information
+- Inventory status indicators (always available vs limited stock)
+- Add materials to shopping cart with quantity selection
+
+### Shopping Cart
+- Add/remove items with quantity management
+- Persistent cart using localStorage
+- Real-time price calculations
+- Cart badge with item count
+
+### Order Management
+- Create orders (jobs) in ServiceM8
+- View all orders with status indicators
+- Detailed order view with materials breakdown
+- Company-based order filtering and authorization
+
+### Notes System
+- Add notes to specific orders
+- View all notes for an order
+- Timestamp tracking for notes
+- Company ownership authorization
 
 ## Tech Stack
 
 ### Backend
-- Express.js
-- MySQL
-- JWT (JSON Web Tokens)
-- bcrypt for password hashing
-- express-validator for input validation
-- CORS enabled
-- Cookie-parser for handling cookies
+- Express.js - Web framework
+- MySQL - Database
+- Sequelize - ORM with migrations
+- JWT (JSON Web Tokens) - Authentication
+- bcrypt - Password hashing
+- express-validator - Input validation
+- axios - ServiceM8 API integration
+- CORS - Cross-origin resource sharing
+- cookie-parser - Cookie handling
+- uuid - UUID generation for ServiceM8
 
 ### Frontend
-- Next.js 16 (App Router)
-- React 19
-- TypeScript
-- Tailwind CSS v4
-- shadcn UI components
-- Context API for state management
+- Next.js 15 (App Router) - React framework
+- React 19 - UI library
+- TypeScript - Type safety
+- Tailwind CSS v4 - Styling
+- shadcn UI components - UI component library
+- Context API - State management
+
+### Third-Party Integration
+- ServiceM8 API - Materials, jobs, companies, and notes management
 
 ## Setup Instructions
 
