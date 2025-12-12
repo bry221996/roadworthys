@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const materialsRoutes = require('./routes/materials');
 const { sequelize } = require('./models');
 
 const app = express();
@@ -23,7 +24,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-
+app.use('/api/materials', materialsRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
