@@ -105,6 +105,107 @@ const createJob = async (req, res) => {
   }
 };
 
+const listJobs = async (req, res) => {
+  try {
+    // Get user and their company_id
+    const user = await User.findByPk(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // If user doesn't have a company_id, return empty list
+    if (!user.company_id) {
+      return res.json({
+        success: true,
+        jobs: []
+      });
+    }
+
+    // Fetch jobs from ServiceM8 filtered by company_uuid
+    const response = await axios.get('https://api.servicem8.com/api_1.0/job.json', {
+      params: {
+        '$filter': `company_uuid eq '${user.company_id}'`
+      },
+      headers: {
+        'accept': 'application/json',
+        'X-Api-Key': process.env.SERVICEM8_API_KEY
+      }
+    });
+
+    res.json({
+      success: true,
+      jobs: response.data
+    });
+  } catch (error) {
+    console.error('List jobs error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to fetch jobs'
+    });
+  }
+};
+
+const getJobDetails = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+
+    // Get user to verify company ownership
+    const user = await User.findByPk(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Fetch job details from ServiceM8
+    const jobResponse = await axios.get(`https://api.servicem8.com/api_1.0/job/${uuid}.json`, {
+      headers: {
+        'accept': 'application/json',
+        'X-Api-Key': process.env.SERVICEM8_API_KEY
+      }
+    });
+
+    // Verify the job belongs to the user's company
+    if (user.company_id && jobResponse.data.company_uuid !== user.company_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized to view this job'
+      });
+    }
+
+    // Fetch job materials
+    const materialsResponse = await axios.get('https://api.servicem8.com/api_1.0/jobmaterial.json', {
+      params: {
+        '$filter': `job_uuid eq '${uuid}'`
+      },
+      headers: {
+        'accept': 'application/json',
+        'X-Api-Key': process.env.SERVICEM8_API_KEY
+      }
+    });
+
+    res.json({
+      success: true,
+      job: jobResponse.data,
+      materials: materialsResponse.data
+    });
+  } catch (error) {
+    console.error('Get job details error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to fetch job details'
+    });
+  }
+};
+
 module.exports = {
-  createJob
+  createJob,
+  listJobs,
+  getJobDetails
 };

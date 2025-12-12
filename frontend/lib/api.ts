@@ -108,11 +108,49 @@ export interface CheckoutResponse {
   message: string;
 }
 
+export interface Job {
+  uuid: string;
+  status: string;
+  company_uuid: string;
+  edit_date: string;
+  created_date: string;
+  [key: string]: any;
+}
+
+export interface JobsListResponse {
+  success: boolean;
+  jobs: Job[];
+}
+
+export interface JobMaterial {
+  uuid: string;
+  job_uuid: string;
+  material_uuid: string;
+  quantity: number;
+  price: string;
+  displayed_amount: string;
+  [key: string]: any;
+}
+
+export interface JobDetailsResponse {
+  success: boolean;
+  job: Job;
+  materials: JobMaterial[];
+}
+
 export const jobsAPI = {
   createJob: async (items: CheckoutItem[]): Promise<CheckoutResponse> => {
     return fetchAPI('/jobs', {
       method: 'POST',
       body: JSON.stringify({ items }),
     });
+  },
+
+  listJobs: async (): Promise<JobsListResponse> => {
+    return fetchAPI('/jobs');
+  },
+
+  getJobDetails: async (uuid: string): Promise<JobDetailsResponse> => {
+    return fetchAPI(`/jobs/${uuid}`);
   },
 };

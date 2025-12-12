@@ -35,6 +35,11 @@ export default function Navbar() {
               <div className="h-9 w-24 bg-gray-200 animate-pulse rounded-md" />
             ) : user ? (
               <>
+                <Link href="/jobs">
+                  <Button variant="ghost" size="sm">
+                    My Orders
+                  </Button>
+                </Link>
                 <Link href="/cart">
                   <Button variant="outline" size="sm" className="relative">
                     🛒 Cart
