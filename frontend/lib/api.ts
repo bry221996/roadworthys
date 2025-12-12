@@ -23,6 +23,28 @@ export interface AuthResponse {
   user?: User;
 }
 
+export interface Material {
+  uuid: string;
+  name: string;
+  item_number: string;
+  price: string;
+  cost: string;
+  quantity_in_stock: number;
+  price_includes_taxes: string;
+  barcode: string;
+  item_is_inventoried: string;
+  active: number;
+  edit_date: string;
+  item_description: string;
+  use_description_for_invoicing: string;
+  tax_rate_uuid: string;
+}
+
+export interface MaterialsResponse {
+  success: boolean;
+  materials: Material[];
+}
+
 async function fetchAPI(endpoint: string, options: RequestInit = {}) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
@@ -65,5 +87,11 @@ export const authAPI = {
 
   getMe: async (): Promise<{ success: boolean; user: User }> => {
     return fetchAPI('/auth/me');
+  },
+};
+
+export const materialsAPI = {
+  list: async (): Promise<MaterialsResponse> => {
+    return fetchAPI('/materials');
   },
 };

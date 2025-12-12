@@ -3,6 +3,9 @@ const axios = require('axios');
 const listMaterials = async (req, res) => {
   try {
     const response = await axios.get('https://api.servicem8.com/api_1.0/material.json', {
+        params: {
+            '$filter': 'active eq 1'
+        },
       headers: {
         'accept': 'application/json',
         'X-Api-Key': process.env.SERVICEM8_API_KEY
