@@ -1,7 +1,6 @@
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
-const db = require('../config/database');
+const { User } = require('../models');
 
 const register = async (req, res) => {
   try {
@@ -12,24 +11,20 @@ const register = async (req, res) => {
 
     const { email, password, name } = req.body;
 
-    const [existingUsers] = await db.query(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
-    );
+    const existingUser = await User.findOne({ where: { email } });
 
-    if (existingUsers.length > 0) {
+    if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const [result] = await db.query(
-      'INSERT INTO users (email, password, name) VALUES (?, ?, ?)',
-      [email, hashedPassword, name]
-    );
+    const user = await User.create({
+      email,
+      password,
+      name
+    });
 
     const token = jwt.sign(
-      { userId: result.insertId, email },
+      { userId: user.id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE }
     );
@@ -37,7 +32,7 @@ const register = async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
@@ -45,9 +40,9 @@ const register = async (req, res) => {
       success: true,
       message: 'User registered successfully',
       user: {
-        id: result.insertId,
-        email,
-        name
+        id: user.id,
+        email: user.email,
+        name: user.name
       }
     });
   } catch (error) {
@@ -65,18 +60,13 @@ const login = async (req, res) => {
 
     const { email, password } = req.body;
 
-    const [users] = await db.query(
-      'SELECT * FROM users WHERE email = ?',
-      [email]
-    );
+    const user = await User.findOne({ where: { email } });
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const user = users[0];
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await user.comparePassword(password);
 
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -91,7 +81,7 @@ const login = async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
@@ -129,18 +119,17 @@ const logout = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const [users] = await db.query(
-      'SELECT id, email, name, created_at FROM users WHERE id = ?',
-      [req.user.userId]
-    );
+    const user = await User.findByPk(req.user.userId, {
+      attributes: ['id', 'email', 'name', 'created_at']
+    });
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     res.json({
       success: true,
-      user: users[0]
+      user
     });
   } catch (error) {
     console.error('Get user error:', error);
